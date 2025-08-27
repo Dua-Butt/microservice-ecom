@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users
+  namespace: ecom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+        - name: svc
+          image: local/users:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5003
+          env:
+            - name: DB2_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_HOST
+            - name: DB2_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_NAME
+            - name: DB2_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_USER
+            - name: DB2_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_PORT
+            - name: DB2_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DB2_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+  namespace: ecom
+spec:
+  selector:
+    app: users
+  ports:
+    - port: 5003
+      targetPort: 5003

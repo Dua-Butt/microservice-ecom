@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: ecom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+        - name: svc
+          image: local/cart:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5004
+          env:
+            - name: DB2_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_HOST
+            - name: DB2_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_NAME
+            - name: DB2_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_USER
+            - name: DB2_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB2_PORT
+            - name: DB2_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DB2_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+  namespace: ecom
+spec:
+  selector:
+    app: cart
+  ports:
+    - port: 5004
+      targetPort: 5004

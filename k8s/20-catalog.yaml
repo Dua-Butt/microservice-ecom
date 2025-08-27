@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: ecom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      containers:
+        - name: svc
+          image: local/catalog:v3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          env:
+            - name: DB1_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_HOST
+            - name: DB1_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_NAME
+            - name: DB1_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_USER
+            - name: DB1_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_PORT
+            - name: DB1_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DB1_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: ecom
+spec:
+  selector:
+    app: catalog
+  ports:
+    - port: 5001
+      targetPort: 5001

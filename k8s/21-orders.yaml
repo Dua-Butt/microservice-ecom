@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: ecom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: svc
+          image: local/orders:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5002
+          env:
+            - name: DB1_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_HOST
+            - name: DB1_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_NAME
+            - name: DB1_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_USER
+            - name: DB1_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB1_PORT
+            - name: DB1_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DB1_PASS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-service
+  namespace: ecom
+spec:
+  selector:
+    app: orders
+  ports:
+    - port: 5002
+      targetPort: 5002

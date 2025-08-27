@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>✨ E-Commerce Microservices Demo</title>
+<style>
+  :root { --bg:#0b1220; --card:#121a2f; --accent:#ffd166; --accent2:#ef476f; --text:#e7ecff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:
+    radial-gradient(1200px 600px at 20% -10%, #18213b 0, transparent 60%),
+    radial-gradient(1000px 600px at 120% 10%, #1b2747 0, transparent 60%),
+    var(--bg); color:var(--text)}
+  header{padding:28px 20px;text-align:center;border-bottom:1px solid #1e2a4a;background:linear-gradient(180deg,#0e1630,transparent)}
+  h1{margin:0;font-size:28px}
+  main{max-width:1100px;margin:28px auto; padding:0 16px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .card{background:var(--card);border:1px solid #1f2a4a;border-radius:16px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1832;border:1px solid #203056;color:#9dc1ff;font-size:12px}
+  button{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#061021;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+  input,select{background:#0e162a;color:var(--text);border:1px solid #213055;border-radius:10px;padding:10px}
+  .price{font-weight:700;color:var(--accent)}
+  ul{padding-left:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap; align-items:center}
+  .muted{opacity:.8}
+  footer{opacity:.7;text-align:center;padding:18px}
+  .product{display:flex;gap:14px;align-items:center}
+  .emoji{font-size:28px}
+
+  /* ===== Fresh Auth Card Styles ===== */
+  .auth-card{
+    background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)), var(--card);
+    border:1px solid #26365f; border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.35)
+  }
+  .auth-tabs{display:flex;gap:8px;margin-bottom:12px}
+  .auth-tab{
+    flex:1; text-align:center; padding:10px 12px; border-radius:10px; cursor:pointer;
+    background:#0f1730; border:1px solid #23345b; color:#a9c4ff; font-weight:700;
+    transition: transform .08s ease, background .2s ease;
+  }
+  .auth-tab.active{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#061021 }
+  .auth-tab:active{ transform:scale(.98) }
+  .auth-fields{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+  .auth-fields .full{grid-column:1 / -1}
+  .input{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:#0e162a;border:1px solid #213055}
+  .input input{flex:1;background:transparent;border:0;color:var(--text);outline:none}
+  .input .icon{opacity:.8}
+  .auth-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .helper{font-size:12px;opacity:.75}
+  .toast{padding:8px 10px;border-radius:10px;background:#0f1936;border:1px solid #2a3c69}
+  .btn-ghost{background:transparent;border:1px solid #2a3c69;color:#b8ccff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .toggle-eye{cursor:pointer;font-size:14px;opacity:.8}
+</style>
+</head>
+<body>
+<header>
+  <h1>✨ E-Commerce Microservices Demo version 2</h1>
+  <div class="muted">Frontend (NGINX) • 4 services • 2 databases</div>
+</header>
+
+<main class="grid">
+  <!-- Auth card (fresh look) -->
+  <section class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Login</div>
+      <div class="auth-tab" id="tab-register" onclick="switchAuth('register')">Create account</div>
+    </div>
+
+    <div class="auth-fields" id="auth-fields">
+      <!-- name only for register -->
+      <div class="input full" id="row-name" style="display:none">
+        <span class="icon">👤</span>
+        <input id="name" placeholder="Full name">
+      </div>
+      <div class="input full">
+        <span class="icon">📧</span>
+        <input id="email" placeholder="Email">
+      </div>
+      <div class="input full">
+        <span class="icon">🔒</span>
+        <input id="pwd" type="password" placeholder="Password">
+        <span class="toggle-eye" onclick="togglePwd()">👁</span>
+      </div>
+    </div>
+
+    <div class="auth-actions">
+      <button id="btn-login" onclick="login()">Login</button>
+      <button id="btn-register" class="btn-ghost" onclick="register()" style="display:none">Register</button>
+      <span id="authStatus" class="toast">Not signed in</span>
+    </div>
+    <div class="helper" style="margin-top:8px">
+      Tip: Register → Login → Add to Cart → Place Order.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="badge">2) Catalog</div>
+    <button onclick="loadProducts()" style="margin-top:8px">Load Products</button>
+    <ul id="products"></ul>
+  </section>
+
+  <section class="card">
+    <div class="badge">3) Cart</div>
+    <div class="row" style="margin-top:8px">
+      <input id="addPid" type="number" placeholder="product_id"/>
+      <input id="addQty" type="number" placeholder="qty" value="1"/>
+      <button onclick="addToCart()">Add</button>
+    </div>
+    <button onclick="viewCart()" style="margin-top:8px">View Cart</button>
+    <pre id="cartBox"></pre>
+  </section>
+
+  <section class="card">
+    <div class="badge">4) Place Order</div>
+    <div class="muted" style="margin-top:8px">Order from current cart</div>
+    <button onclick="placeOrder()" style="margin-top:8px">Place Order</button>
+    <pre id="orderBox"></pre>
+  </section>
+</main>
+
+<footer>Microservices: catalog • orders • users • cart. Databases: DB1 (catalog+orders), DB2 (users+cart).</footer>
+
+<script>
+let user = { token:null, id:null };
+
+function switchAuth(mode){
+  const isLogin = mode === 'login';
+  document.getElementById('row-name').style.display = isLogin ? 'none' : 'flex';
+  document.getElementById('btn-login').style.display = isLogin ? 'inline-block' : 'none';
+  document.getElementById('btn-register').style.display = isLogin ? 'none' : 'inline-block';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-register').classList.toggle('active', !isLogin);
+}
+function togglePwd(){
+  const el = document.getElementById('pwd');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function register(){
+  const res = await fetch('/api/user/register', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name: val('name'), email: val('email'), password: val('pwd') })
+  });
+  setStatus('#authStatus', await res.text());
+}
+async function login(){
+  const res = await fetch('/api/user/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email: val('email'), password: val('pwd') })
+  });
+  const data = await res.json();
+  if(data.token){
+    user.token = data.token; user.id = data.user_id;
+    setStatus('#authStatus','Logged in ✔ user_id=' + user.id);
+    switchAuth('login');
+  } else {
+    setStatus('#authStatus', JSON.stringify(data));
+  }
+}
+async function loadProducts(){
+  const res = await fetch('/api/catalog/products');
+  const items = await res.json();
+  const ul = document.querySelector('#products'); ul.innerHTML='';
+  items.forEach(p=>{
+    const li=document.createElement('li');
+    li.innerHTML = `<div class="product"><div class="emoji">${p.image||'🛒'}</div>
+      <div><div><b>${p.id}. ${p.name}</b> — <span class="price">Rs. ${p.price}</span></div></div></div>`;
+    ul.appendChild(li);
+  });
+}
+async function addToCart(){
+  if(!user.id) return alert('Login first');
+  const res = await fetch('/api/cart/add',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ user_id:user.id, product_id:Number(val('addPid')), qty:Number(val('addQty')) })
+  });
+  setStatus('#cartBox', await res.text());
+}
+async function viewCart(){
+  if(!user.id) return alert('Login first');
+  const res = await fetch('/api/cart/' + user.id);
+  setStatus('#cartBox', JSON.stringify(await res.json(), null, 2));
+}
+async function placeOrder(){
+  if(!user.id) return alert('Login first');
+  const cart = await (await fetch('/api/cart/' + user.id)).json();
+  const items = (cart.items||[]).map(it=>({ product_id: it.product_id, qty: it.qty }));
+  if(items.length===0) return alert('Cart is empty');
+  const res = await fetch('/api/order/place', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ user_id:user.id, items })
+  });
+  setStatus('#orderBox', await res.text());
+}
+function val(id){ return document.getElementById(id).value }
+function setStatus(sel, text){
+  const el = document.querySelector(sel);
+  try { el.textContent = JSON.stringify(JSON.parse(text), null, 0); }
+  catch { el.textContent = text; }
+}
+</script>
+</body>
+</html>
